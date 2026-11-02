@@ -3,3 +3,5 @@ __pycache__/
 .env
 memory.json
 personal_memory.json
+tasks.json
+test_tasks.json
