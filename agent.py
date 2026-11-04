@@ -7,6 +7,7 @@ from config import get_api_key, get_model_name
 from memory_manager import MemoryManager
 from tools import BrainiacTools
 from task_manager import TaskManager
+from planner import DailyPlanner
 
 class BrainiacAI:
     """A personal AI assistant with memory and useful tools."""
@@ -18,6 +19,7 @@ class BrainiacAI:
         self.personal_memory = MemoryManager()
         self.tools = BrainiacTools()
         self.task_manager = TaskManager()
+        self.planner = DailyPlanner()
         self.client = OpenAI(
             api_key=get_api_key(),
             base_url="https://api.groq.com/openai/v1"
@@ -180,8 +182,51 @@ class BrainiacAI:
 
         return None
 
+
+    def handle_planner_command(self, message):
+        """Handle daily planner commands."""
+
+        message = message.strip()
+
+        add_match = re.match(
+            r"add plan:\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(\d{4}-\d{2}-\d{2})\s*\|\s*(High|Medium|Low)",
+            message,
+            re.IGNORECASE
+        )
+
+        if add_match:
+            description, category, due_date, priority = add_match.groups()
+            return self.planner.add_task(
+                description, category, due_date, priority.title()
+            )
+
+        if message.lower() in ("show today's plan", "show today plan"):
+            return self.planner.show_today()
+
+        if message.lower() in ("show all plans", "show my plans"):
+            return self.planner.show_all()
+
+        complete_match = re.match(
+            r"complete plan\s+(\d+)",
+            message,
+            re.IGNORECASE
+        )
+
+        if complete_match:
+            return self.planner.complete_task(
+                int(complete_match.group(1))
+            )
+
+        return None
+
     def ask(self, user_message: str) -> str:
         """Answer questions using memory, tools, or AI."""
+        planner_reply = self.handle_planner_command(user_message)
+
+        if planner_reply is not None:
+            self.save_exchange(user_message, planner_reply)
+            return planner_reply
+
         task_reply = self.handle_task_command(user_message)
 
         if task_reply is not None:

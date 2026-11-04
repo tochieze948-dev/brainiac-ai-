@@ -5,3 +5,5 @@ memory.json
 personal_memory.json
 tasks.json
 test_tasks.json
+planner.json
+agent.py.backup
